@@ -5,8 +5,8 @@ train <- data.frame(train)
 train <- data.frame(train)
 train$PersonalField84 <- NULL
 train$PropertyField29 <- NULL
-# train.numerical <- train[,sapply(train,is.integer)]
-# train.numerical <- train[,sapply(train, )]
+train.numerical <- train[,sapply(train,is.integer)]
+train.numerical <- train[,sapply(train, )]
 # train.bin <- train.numerical[,sapply(train.numerical, function (x) all(x%in%0:1))]  
 # bin.idx <- which(names(train)%in%names(train.bin))
 train2 <- train
