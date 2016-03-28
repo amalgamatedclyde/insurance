@@ -1,0 +1,52 @@
+setwd( "/home/clyde/insurance")
+library(data.table)
+# library(gputools)
+train <- fread('train.csv')
+train <- data.frame(train)
+train$type <- "train"
+test <- fread('test.csv')
+test <- data.frame(test)
+test$type <- "test"
+test$QuoteConversion_Flag <- 0
+test <- test[,c(1,2,300,3:299)]
+complete <- rbind(train,test)
+###complete set
+complete$PersonalField84 <- NULL
+complete$PropertyField29 <- NULL
+complete.numerical <- complete[,sapply(complete,is.integer)]
+# complete2 <- complete
+# train2[,bin.idx] <- lapply(train2[,bin.idx], as.factor)
+complete.values <- sapply(complete.numerical, unique)
+factors <- sapply(complete.values, length)
+factors <- complete.values[factors<31]
+factor.idx <- which(names(complete)%in%names(factors))
+complete[,factor.idx] <- lapply(complete[,factor.idx], as.factor)
+complete.character <- complete[,sapply(complete,is.character)]
+char.len <- (lapply(complete.character, unique))
+char.len <- (lapply(char.len, length))
+char.idx <- which(names(complete)%in%names(complete.character))
+complete[,char.idx] <- lapply(complete[,char.idx], as.factor)
+factors <- sapply(names(complete), function(name) is.factor(complete[[name]]))
+b <- complete[,which(names(complete) %in% names(factors))]
+counts <- sapply(names(b), function(name) length(levels(complete[[name]]))<2)
+c <- b[,-which(counts==TRUE)]
+c$QuoteConversion_Flag <- as.factor(complete$QuoteConversion_Flag)
+
+set.seed(314159)
+train2 <- subset(c, type=="train")
+test.set <- subset(c, type=="test")
+train2$type <- NULL
+test.set$type <- NULL
+include <- sample(c(FALSE, TRUE), nrow(train2), replace = T, prob = c(.1,.9))
+# train.valid <- sample_frac(train2, size = .9)
+train.valid <- train2[include,]
+test<- train2[!include,]
+include <- sample(c(FALSE, TRUE), 234678, replace = T, prob = c(.4,.6))
+train.set <- train.valid[include,]
+valid.set <- train.valid[!include,]
+
+library(caret)
+# control <- trainControl(mmethod = "repeatedcv", number = 10, repeats=3)
+fit <- train.formula(QuoteConversion_Flag~., data = train.set, method = "xgbTree")
+fit2 <- train(QuoteConversion_Flag~., data = train.set, method = "svm")
+
